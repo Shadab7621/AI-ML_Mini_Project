@@ -1,6 +1,6 @@
 # Classification Visualiser
 
-An interactive dashboard for training and comparing seven classification algorithms. It starts with the UCI Mushroom dataset (is a mushroom edible or poisonous?), ships with four more sample datasets, and accepts CSV files of your own.
+An interactive dashboard for training and comparing seven classification algorithms. It starts with the UCI Mushroom dataset (is a mushroom edible or poisonous?), ships with thirteen more sample datasets, and accepts CSV files of your own.
 
 You pick the data and the column to predict, pick a model, adjust its settings, train it, and see how well it does on rows it has never seen.
 
@@ -62,6 +62,7 @@ Then open <http://localhost:5173>. The web page sends every request that starts 
 │   ├── explore.py         What the Dataset page shows
 │   ├── ml.py              The models, data preparation and scoring (scikit-learn)
 │   ├── main.py            The HTTP API (FastAPI)
+│   ├── tests/             Automated tests for the backend
 │   └── requirements.txt
 ├── frontend/
 │   └── src/
@@ -120,13 +121,24 @@ All of this is learned from the training rows only.
 
 ## Datasets
 
-| Dataset | Rows | Columns used | Predicts | Typical accuracy |
-|---|---|---|---|---|
-| Mushrooms (`Mushrooms.csv`) | 8,124 | 21 categories | edible or poisonous | 95 to 100% |
-| Titanic passengers | 891 | 2 numbers, 5 categories | survived or died | about 80% |
-| Heart disease | 303 | 5 numbers, 8 categories | heart disease or healthy | about 83% |
-| Breast cancer | 569 | 30 numbers | malignant or benign | about 96% |
-| Telecom customer churn | 7,043 | 3 numbers, 16 categories | left or stayed | about 80% |
+Accuracy is that of Logistic Regression with its default settings on the 30% test split. Where a dataset has more than two classes, the app detects one of them against the rest (the default is shown).
+
+| Dataset | Rows | Columns used | Predicts | Accuracy | Worth knowing |
+|---|---|---|---|---|---|
+| Mushrooms (`Mushrooms.csv`) | 8,124 | 21 categories | edible or poisonous | 99.9% | Too easy: most models score 100% |
+| Iris flowers | 150 | 4 numbers | species (virginica vs rest) | 93.3% | The classic first test |
+| Wine cultivars | 178 | 13 numbers | cultivar (3 vs rest) | 100% | Small, three classes |
+| Penguins | 344 | 4 numbers, 2 categories | species (Gentoo vs rest) | 100% | Has missing values |
+| Titanic passengers | 891 | 2 numbers, 5 categories | survived or died | 80.2% | Missing ages; IDs and names left out |
+| Heart disease | 303 | 5 numbers, 8 categories | heart disease or healthy | 84.6% | Small; scores vary a lot between splits |
+| Diabetes (Pima) | 768 | 8 numbers | diabetes or not | 74.5% | Many missing readings |
+| Breast cancer | 569 | 30 numbers | malignant or benign | 97.1% | Many correlated columns |
+| Banknote authentication | 1,372 | 4 numbers | genuine or forged | 97.8% | Very clean |
+| Tic-tac-toe endgames | 958 | 9 categories | does X win | 97.9% | Every column is a category |
+| Congress votes (1984) | 435 | 16 categories | party | 96.9% | Missing votes |
+| Sonar: rock or mine | 208 | 60 numbers | mine or rock | 76.2% | Many columns, few rows |
+| Red wine quality | 1,599 | 11 numbers | good quality or not | 88.8% | A hard problem; the commonest class is 86% |
+| Telecom customer churn | 7,043 | 3 numbers, 16 categories | left or stayed | 80.8% | The largest; SVM is slow here |
 
 Where the sample files come from is listed in `datasets/README.md`.
 
@@ -139,6 +151,15 @@ On the Dataset page, press **Upload a CSV file**. The file needs:
 - one column with between 2 and 20 distinct values to predict, with at least 10 rows of each outcome
 
 If the column to predict has more than two values, you choose one to detect and the rest are grouped together. Uploaded files are stored in `datasets/uploads/` on your own computer.
+
+## Tests
+
+The backend has an automated test suite (74 tests, about a minute and a half). It checks that every sample dataset is understood, that all seven models train on them, the analyses, predictions, uploads of messy files, and the API's error messages.
+
+```bash
+pip install -r backend/requirements-dev.txt
+python -m pytest
+```
 
 ## The earlier Streamlit version
 

@@ -2,6 +2,7 @@ import * as React from "react"
 import { MotionConfig, useAnimate, useReducedMotion } from "motion/react"
 
 import { ErrorNote, Working } from "@/components/common"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { Backdrop } from "@/components/layout/backdrop"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -59,7 +60,9 @@ function PageSlot({
       // its own layer on the graphics card, so the slide and fade do not repaint the page
       className={active ? "will-change-[transform,opacity]" : "invisible absolute inset-x-0 top-0 h-0 overflow-hidden"}
     >
-      <ActiveContext value={active}>{children}</ActiveContext>
+      <ActiveContext value={active}>
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </ActiveContext>
     </div>
   )
 }

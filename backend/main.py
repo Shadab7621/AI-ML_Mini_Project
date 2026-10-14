@@ -4,6 +4,7 @@ Run from the project root:
     python -m uvicorn backend.main:app --port 8000
 """
 import json
+import logging
 import math
 import random
 import threading
@@ -21,6 +22,8 @@ from pydantic import BaseModel
 from . import datasets, explore, ml
 from .datasets import DataError
 
+log = logging.getLogger("uvicorn.error")
+
 app = FastAPI(title="Classification Visualiser API")
 app.add_middleware(
     CORSMiddleware,
@@ -34,6 +37,18 @@ app.add_middleware(
 def data_error(_: Request, error: DataError):
     """Problems the user can fix come back as a readable message, not a crash."""
     return JSONResponse(status_code=422, content={"detail": str(error)})
+
+
+@app.exception_handler(Exception)
+def unexpected_error(request: Request, error: Exception):
+    """Anything unforeseen still comes back as a readable message, so the page can show it."""
+    log.error("Unexpected error on %s", request.url.path, exc_info=error)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "The server hit an unexpected problem with this request "
+                           f"({type(error).__name__}: {str(error)[:200]}). "
+                           "Try another model or another dataset."},
+    )
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -59,6 +74,11 @@ _CACHE_SIZE = 64
 _cache: "OrderedDict[tuple, object]" = OrderedDict()
 _locks: dict = {}
 _guard = threading.Lock()
+
+# Feature importance, learning curves and cross-validation all use joblib worker processes. Two of
+# them at once (the page asks for several together) can shut each other's workers down, so they
+# take turns. Training and comparing are not affected.
+_analysis = threading.Lock()
 
 
 def cached(kind, key, compute):
@@ -187,22 +207,28 @@ def train(req: ModelRequest):
 @app.post("/api/feature-importance")
 def feature_importance(req: ModelRequest):
     problem, name, params, key = resolve(req)
-    return cached("importance", key, lambda: clean(
-        ml.feature_importance(problem, fitted(problem, name, params, key)[0], name)))
+    def compute():
+        with _analysis:
+            return clean(ml.feature_importance(problem, fitted(problem, name, params, key)[0], name))
+    return cached("importance", key, compute)
 
 
 @app.post("/api/learning-curve")
 def learning_curve(req: ModelRequest):
     problem, name, params, key = resolve(req)
-    return cached("learning", key, lambda: clean(
-        ml.learning_curve_data(problem, fitted(problem, name, params, key)[0])))
+    def compute():
+        with _analysis:
+            return clean(ml.learning_curve_data(problem, fitted(problem, name, params, key)[0]))
+    return cached("learning", key, compute)
 
 
 @app.post("/api/cross-validation")
 def cross_validation(req: ModelRequest):
     problem, name, params, key = resolve(req)
-    return cached("cv", key, lambda: clean(
-        ml.cross_validation(problem, fitted(problem, name, params, key)[0])))
+    def compute():
+        with _analysis:
+            return clean(ml.cross_validation(problem, fitted(problem, name, params, key)[0]))
+    return cached("cv", key, compute)
 
 
 @app.post("/api/predict")

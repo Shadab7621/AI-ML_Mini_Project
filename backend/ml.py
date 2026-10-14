@@ -402,18 +402,22 @@ def feature_importance(problem: Problem, pipe, clf_name, n_top=15):
 def learning_curve_data(problem: Problem, pipe):
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     try:
+        # a slice that fails to train (a very small slice can hold only one outcome) scores NaN
+        # instead of stopping the whole curve; when nothing fails the numbers are the same
         sizes, tr_scores, cv_scores = learning_curve(
             pipe, problem.X_train, problem.y_train, cv=cv,
             train_sizes=np.linspace(.1, 1.0, 9),
-            scoring="accuracy", n_jobs=-1, error_score="raise",
+            scoring="accuracy", n_jobs=-1, error_score=np.nan,
         )
     except ValueError as error:
-        if "class" in str(error):
-            raise DataError("There are too few rows for a learning curve: the smallest slices "
-                            "of the training set do not contain both outcomes.")
         raise DataError(f"The learning curve could not be computed ({error}).")
-    tr_m, tr_s = tr_scores.mean(1), tr_scores.std(1)
-    cv_m, cv_s = cv_scores.mean(1), cv_scores.std(1)
+    usable = ~(np.isnan(tr_scores).all(axis=1) | np.isnan(cv_scores).all(axis=1))
+    if usable.sum() < 2:
+        raise DataError("There are too few rows for a learning curve: the smaller slices "
+                        "of the training set do not contain both outcomes.")
+    sizes, tr_scores, cv_scores = sizes[usable], tr_scores[usable], cv_scores[usable]
+    tr_m, tr_s = np.nanmean(tr_scores, axis=1), np.nanstd(tr_scores, axis=1)
+    cv_m, cv_s = np.nanmean(cv_scores, axis=1), np.nanstd(cv_scores, axis=1)
     return {
         "sizes": sizes.tolist(),
         "train_mean": tr_m.tolist(), "train_std": tr_s.tolist(),

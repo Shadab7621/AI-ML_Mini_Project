@@ -72,6 +72,64 @@ SAMPLES = OrderedDict(
         tagline="Customers: who leaves?",
         description="Customers of a telecom company: their contract, services and charges, and whether they left.",
     ),
+    iris=dict(
+        name="Iris flowers", file=SAMPLE_DIR / "iris.csv", target="species", positive="virginica",
+        labels={}, positive_is="neutral", unit="flowers",
+        tagline="Iris: which species?",
+        description="Fisher's classic Iris data: four measurements of 150 flowers of three species. Easy, and a good first test.",
+    ),
+    wine=dict(
+        name="Wine cultivars", file=SAMPLE_DIR / "wine.csv", target="cultivar", positive="cultivar_3",
+        labels={"cultivar_1": "cultivar 1", "cultivar_2": "cultivar 2", "cultivar_3": "cultivar 3"},
+        positive_is="neutral", unit="wines",
+        tagline="Wines: which cultivar?",
+        description="Chemical analysis of 178 wines grown in one region of Italy from three different cultivars.",
+    ),
+    penguins=dict(
+        name="Penguins", file=SAMPLE_DIR / "penguins.csv", target="species", positive="Gentoo",
+        labels={}, positive_is="neutral", unit="penguins",
+        tagline="Penguins: which species?",
+        description="Palmer Station penguins: bill and flipper sizes, body mass, island and sex. Some values are missing.",
+    ),
+    diabetes=dict(
+        name="Diabetes (Pima)", file=SAMPLE_DIR / "diabetes.csv", target="diabetes", positive="yes",
+        labels={"no": "no diabetes", "yes": "diabetes"}, positive_is="bad", unit="patients",
+        tagline="Patients: diabetes or not?",
+        description="Medical measurements of 768 women of Pima heritage and whether they developed diabetes. Many readings are missing.",
+        miss_note="A missed patient is the costly mistake.",
+    ),
+    banknotes=dict(
+        name="Banknote authentication", file=SAMPLE_DIR / "banknotes.csv", target="banknote", positive="forged",
+        labels={}, positive_is="bad", unit="banknotes",
+        tagline="Banknotes: genuine or forged?",
+        description="Four measurements taken from images of 1,372 banknotes, genuine and forged.",
+        miss_note="A forgery that gets through is the costly mistake.",
+    ),
+    tictactoe=dict(
+        name="Tic-tac-toe endgames", file=SAMPLE_DIR / "tictactoe.csv", target="x_wins", positive="yes",
+        labels={"no": "x does not win", "yes": "x wins"}, positive_is="neutral", unit="games",
+        tagline="Tic-tac-toe: does X win?",
+        description="The nine squares of 958 finished tic-tac-toe games, and whether X won. Every column is a category.",
+    ),
+    votes=dict(
+        name="Congress votes (1984)", file=SAMPLE_DIR / "house_votes.csv", target="party", positive="republican",
+        labels={}, positive_is="neutral", unit="representatives",
+        tagline="Votes: which party?",
+        description="How 435 US House members voted on 16 issues in 1984, and their party. Missing means no clear position.",
+    ),
+    sonar=dict(
+        name="Sonar: rock or mine", file=SAMPLE_DIR / "sonar.csv", target="object", positive="mine",
+        labels={}, positive_is="bad", unit="readings",
+        tagline="Sonar: rock or mine?",
+        description="60 energy readings of a sonar signal bounced off an object: a metal mine or a rock. Many columns, few rows.",
+        miss_note="A missed mine is the costly mistake.",
+    ),
+    red_wine=dict(
+        name="Red wine quality", file=SAMPLE_DIR / "red_wine_quality.csv", target="good_quality", positive="yes",
+        labels={"no": "ordinary", "yes": "good quality"}, positive_is="good", unit="wines",
+        tagline="Red wine: good quality?",
+        description="Chemical tests of 1,599 red wines and whether tasters rated them good. A hard problem: expect modest scores.",
+    ),
 )
 
 _lock = threading.Lock()
@@ -104,13 +162,41 @@ def _locate(dataset_id: str):
     raise DataError("That dataset is no longer available. Pick another one.")
 
 
+SEPARATORS = [",", ";", "	", "|"]
+
+
+def _separator(source) -> str:
+    """Guess the column separator from the first lines: the one that splits every line into the
+    same number of parts. Only the usual four are considered, so a single column of numbers can
+    never be taken for a table split on a digit."""
+    if isinstance(source, bytes):
+        head = source[:65536]
+    else:
+        with open(source, "rb") as handle:
+            head = handle.read(65536)
+    lines = [line for line in head.decode("utf-8-sig", errors="replace").splitlines() if line.strip()][:25]
+    if not lines:
+        return ","
+    best, best_key = ",", (-1, -1)
+    for sep in SEPARATORS:
+        counts = sorted(line.count(sep) for line in lines)
+        median = counts[len(counts) // 2]
+        if median == 0:
+            continue
+        key = (1 if counts[0] == counts[-1] else 0, median)   # every line alike first, then most parts
+        if key > best_key:
+            best, best_key = sep, key
+    return best
+
+
 def _parse(source) -> pd.DataFrame:
     """Read a CSV file (path or bytes). The separator is detected; '?' and blanks are missing values."""
+    separator = _separator(source)
     last_error = None
     for encoding in ("utf-8-sig", "latin-1"):
         try:
             handle = io.BytesIO(source) if isinstance(source, bytes) else source
-            frame = pd.read_csv(handle, sep=None, engine="python", encoding=encoding,
+            frame = pd.read_csv(handle, sep=separator, encoding=encoding,
                                 na_values=["?", " "], skipinitialspace=True)
             break
         except UnicodeDecodeError as error:
@@ -121,8 +207,7 @@ def _parse(source) -> pd.DataFrame:
         raise DataError(f"This file could not be read as text ({last_error}).")
 
     frame.columns = [str(name).strip() for name in frame.columns]
-    if len(set(frame.columns)) != len(frame.columns):
-        raise DataError("Two columns have the same name. Rename one of them and upload again.")
+    # pandas renames repeated column names (a, a.1, ...), so they are still unique here
     frame = frame.dropna(how="all").reset_index(drop=True)
     return frame
 
@@ -361,7 +446,8 @@ def prepare(dataset_id: str, target: str | None = None, positive: str | None = N
 
     X = pd.DataFrame(index=rows.index)
     for name in numeric:
-        X[name] = pd.to_numeric(rows[name], errors="coerce").astype(float)
+        values = pd.to_numeric(rows[name], errors="coerce").astype(float)
+        X[name] = values.replace([np.inf, -np.inf], np.nan)
     for name in categorical:
         X[name] = as_text(rows[name])
     X = X[numeric + categorical]
