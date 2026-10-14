@@ -1,0 +1,230 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', system-ui, sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --color-good: var(--good);
+    --color-good-ink: var(--good-ink);
+    --color-warn: var(--warn);
+    --color-warn-ink: var(--warn-ink);
+    --color-bad: var(--bad);
+    --color-bad-ink: var(--bad-ink);
+    --color-grid: var(--grid);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* The app is black and white. The only colours are the three status colours:
+   green (good / edible), amber (fair) and red (bad / poisonous). The green and
+   red marks were checked as a pair for colour-blind separation in both themes.
+
+   `.surface-invert` flips a block to the opposite theme (used for the hero card). */
+:root,
+.dark .surface-invert {
+    color-scheme: light;
+    --background: oklch(0.972 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.955 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.955 0 0);
+    --muted-foreground: oklch(0.47 0 0);
+    --accent: oklch(0.955 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: #c9092e;
+    --border: oklch(0.9 0 0);
+    --input: oklch(0.88 0 0);
+    --ring: oklch(0.6 0 0);
+    --chart-1: oklch(0.205 0 0);
+    --chart-2: oklch(0.47 0 0);
+    --chart-3: oklch(0.6 0 0);
+    --chart-4: oklch(0.72 0 0);
+    --chart-5: oklch(0.82 0 0);
+    --radius: 0.75rem;
+    --sidebar: oklch(1 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.955 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.9 0 0);
+    --sidebar-ring: oklch(0.6 0 0);
+
+    --good: #25ab3a;
+    --good-ink: #157a2a;
+    --warn: #fab219;
+    --warn-ink: #8a5a00;
+    --bad: #c9092e;
+    --bad-ink: #c9092e;
+
+    --grid: oklch(0.92 0 0);
+    --glow: oklch(0 0 0 / 28%);
+    --orb: oklch(0 0 0 / 7%);
+    --hero: oklch(0.91 0 0);
+}
+
+.dark,
+:root:not(.dark) .surface-invert {
+    color-scheme: dark;
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.225 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.74 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: #ff6b78;
+    --border: oklch(1 0 0 / 11%);
+    --input: oklch(1 0 0 / 16%);
+    --ring: oklch(0.6 0 0);
+    --chart-1: oklch(0.922 0 0);
+    --chart-2: oklch(0.74 0 0);
+    --chart-3: oklch(0.6 0 0);
+    --chart-4: oklch(0.48 0 0);
+    --chart-5: oklch(0.38 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.922 0 0);
+    --sidebar-primary-foreground: oklch(0.205 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 11%);
+    --sidebar-ring: oklch(0.6 0 0);
+
+    --good: #2aaf3d;
+    --good-ink: #3fc653;
+    --warn: #fab219;
+    --warn-ink: #fab219;
+    --bad: #d41f37;
+    --bad-ink: #ff6b78;
+
+    --grid: oklch(1 0 0 / 9%);
+    --glow: oklch(1 0 0 / 55%);
+    --orb: oklch(1 0 0 / 9%);
+    --hero: oklch(0.18 0 0);
+}
+
+@utility squircle {
+    corner-shape: squircle;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  html {
+    @apply font-sans;
+    scrollbar-color: var(--input) transparent;
+    scrollbar-gutter: stable;
+    }
+  body {
+    @apply bg-background text-[15px] leading-normal text-foreground antialiased;
+    }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+    }
+  ::selection {
+    background: var(--foreground);
+    color: var(--background);
+    }
+}
+
+/* ── Charts ────────────────────────────────────────────────────────────────── */
+
+/* The glow on chart lines and dots (dark theme: light halo; light theme: soft shadow). */
+.chart-glow .recharts-line-curve,
+.chart-glow .recharts-area-curve {
+    filter: drop-shadow(0 0 5px var(--glow));
+}
+.chart-dot {
+    filter: drop-shadow(0 0 4px var(--glow));
+}
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-wrapper *:focus {
+    outline: none;
+}
+
+/* ── Background glow that gives the glass something to bend ───────────────── */
+
+.orb {
+    position: absolute;
+    border-radius: 9999px;
+    background: radial-gradient(closest-side, var(--orb), transparent);
+}
+
+/* The moving highlight on glass buttons follows the pointer (set from JS). */
+.glass-sheen {
+    background: radial-gradient(
+        120px circle at var(--px, 50%) var(--py, 0%),
+        light-dark(oklch(1 0 0 / 55%), oklch(1 0 0 / 22%)),
+        transparent 70%
+    );
+}
+
+/* Glass drawn with gradients and highlights only: it looks the part but does not
+   read what is behind it, so it costs nothing while the page scrolls. */
+.glass-lite {
+    background:
+        linear-gradient(135deg, light-dark(oklch(1 0 0 / 55%), oklch(1 0 0 / 13%)) 0%, transparent 45%,
+            transparent 62%, light-dark(oklch(1 0 0 / 30%), oklch(1 0 0 / 6%)) 100%),
+        light-dark(oklch(0.955 0 0), oklch(1 0 0 / 5%));
+    box-shadow:
+        inset 0 1px 0 0 light-dark(oklch(1 0 0 / 90%), oklch(1 0 0 / 30%)),
+        inset 0 -1px 0 0 light-dark(oklch(0 0 0 / 6%), oklch(1 0 0 / 8%)),
+        inset 0 0 0 1px light-dark(oklch(0 0 0 / 14%), oklch(1 0 0 / 14%)),
+        0 4px 14px -6px oklch(0 0 0 / 22%);
+}
